@@ -1,0 +1,79 @@
+import numpy as np
+import pandas as pd
+
+
+def mod_inv(mod, num):
+    global t1
+    q = 0
+    r = 1
+    t1 = 0
+    t2 = 1
+    t = 0
+    num = num % mod
+    a = mod
+    b = num
+    while r != 0:
+        q = a//b
+        r = a%b
+        t = t1 - (t2*q)
+        a, b = b, r
+        t1, t2 = t2, t
+    return t1 % mod
+
+def point_adding(modval, Gx, Gy, xp, yp):
+    xr = 0
+    yr = 0
+    if (Gx, Gy) == (xp, yp):
+        s = ((3 * (Gx**2)) + a) * (mod_inv(modval, (2*Gy))) % modval
+    else:
+        s = ((yp - Gy) * (mod_inv(modval, (xp - Gx)))) % modval
+
+    xr = ((s**2) - (xp+Gx)) % modval
+    yr = (s * (xp - xr) - yp) % modval
+
+    return xr, yr
+
+def point_mul(k, modval, Gx, Gy):
+    xp = Gx
+    yp = Gy
+    while k!=1:
+        xr, yr = point_adding(modval, Gx, Gy, xp, yp)
+        xp, yp = xr, yr
+        k = k-1
+    return xp, yp
+
+# Given variables
+Gx = 318581379139670721240363812466759239831792176441734025647
+Gy = 919091102204963026041065837669032918123929515645755628328
+a = 404901431155861676143970137827438476987959922220004859868
+modval = 627710173538668076383578942320766641608390870039032496127
+pbx = 283
+pby = 315
+k = 2
+nb = 2
+
+# Calculate header
+header = point_mul(k, modval, Gx, Gy)
+
+# Calculate k*pb
+kpbx , kpby = point_mul(k, modval, pbx, pby)
+
+message_df = pd.read_csv('output.csv')
+message = message_df.iloc[0, 0]  
+
+
+g_val = [point_mul(i, modval, Gx, Gy) for i in range(1, 128)]
+
+body = []
+message_points = []
+
+for c in message:
+    point = g_val[ord(c)]
+    message_points.append(point)
+    body.append(point_adding(modval, kpbx, kpby, *point))
+
+
+encrypted_data_df = pd.DataFrame({'Header': [header], 'Body': [body]})
+encrypted_data_df.to_excel('encrypted_data.xlsx', index=False)
+
+print("Encrypted data written to 'encrypted_data.xlsx'")
