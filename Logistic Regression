@@ -1,0 +1,32 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+import numpy as np
+
+# Load the data
+data = pd.read_excel("encrypted_data_with_challenges12.xlsx")
+
+
+data["Challenge bits"] = data["Challenge bits"].apply(lambda x: int(''.join(filter(str.isdigit, x)), 2))
+data["Encrypted Response"] = data["Encrypted Response"].apply(lambda x: int(str(x)[:64], 2))
+
+
+X = data["Challenge bits"].values.reshape(-1, 1)  # Features
+y = data["Encrypted Response"]  # Target variable
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+model = LogisticRegression(max_iter=12000)
+model.fit(X_train, y_train)
+
+y_pred_train = model.predict(X_train).reshape(-1, 1)
+y_pred_test = model.predict(X_test).reshape(-1, 1)
+
+
+training_score = model.score(y_pred_train, y_train)
+testing_score = model.score(y_pred_test, y_test)
+
+print("Training Accuracy:", training_score)
+print("Testing Accuracy:", testing_score)
