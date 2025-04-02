@@ -1,0 +1,32 @@
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score
+from sklearn.preprocessing import MinMaxScaler
+import pandas as pd
+
+# Load the data
+data = pd.read_excel("encrypted_data_with_challenges12.xlsx")
+
+
+X = data["Challenge bits"].values.reshape(-1, 1)  # Features
+y = data["Encrypted Response"]  # Target variable
+
+scaler = MinMaxScaler()
+X_scaled = scaler.fit_transform(X)
+
+
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+
+
+gbm_model = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42)
+gbm_model.fit(X_train, y_train)
+
+
+y_pred_train = gbm_model.predict(X_train)
+y_pred_test = gbm_model.predict(X_test)
+
+training_r2 = abs(r2_score(y_train, y_pred_train))
+testing_r2 = abs(r2_score(y_test, y_pred_test))
+
+print("Training R-squared:", training_r2)
+print("Testing R-squared:", testing_r2)
